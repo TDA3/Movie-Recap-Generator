@@ -10,6 +10,7 @@ export default function InputSource({ onTranscriptFetched }: InputSourceProps) {
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [uploadProgress, setUploadProgress] = useState<string>('');
 
   const handleFetchTranscript = async () => {
     if (!youtubeUrl.trim()) {
@@ -46,16 +47,61 @@ export default function InputSource({ onTranscriptFetched }: InputSourceProps) {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Reset states
+    setError('');
+    setUploadProgress('');
+
     // Check file size (1GB = 1073741824 bytes)
     const maxSize = 1073741824;
     if (file.size > maxSize) {
       setError('File size exceeds 1GB limit');
+      e.target.value = ''; // Reset file input
       return;
     }
 
-    // For now, we'll just show a message that video processing is not implemented yet
-    // In a production app, you'd upload to a server and extract audio/transcript
-    setError('Video file processing is not yet implemented. Please use YouTube URL or paste transcript manually.');
+    // Check for 25MB Whisper API limit and warn user
+    const whisperLimit = 26214400; // 25MB
+    if (file.size > whisperLimit) {
+      setError('Video file is too large for direct transcription. OpenAI Whisper API has a 25MB limit. Please use a shorter video or compress the file.');
+      e.target.value = ''; // Reset file input
+      return;
+    }
+
+    setLoading(true);
+    setUploadProgress('Uploading video...');
+
+    try {
+      // Create form data for upload
+      const formData = new FormData();
+      formData.append('video', file);
+
+      setUploadProgress('Processing video...');
+
+      // Send to our API endpoint
+      const response = await fetch('/api/process-video', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to process video');
+      }
+
+      setUploadProgress('Transcription complete!');
+      onTranscriptFetched(data.transcript);
+      setError('');
+      
+      // Clear progress message after 2 seconds
+      setTimeout(() => setUploadProgress(''), 2000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to process video');
+      setUploadProgress('');
+    } finally {
+      setLoading(false);
+      e.target.value = ''; // Reset file input
+    }
   };
 
   return (
@@ -99,18 +145,27 @@ export default function InputSource({ onTranscriptFetched }: InputSourceProps) {
           type="file"
           accept="video/*"
           onChange={handleFileUpload}
+          disabled={loading}
           className="block w-full text-sm text-gray-400
             file:mr-4 file:py-2 file:px-4
             file:rounded file:border-0
             file:text-sm file:font-medium
             file:bg-red-600 file:text-white
             hover:file:bg-red-700
-            file:cursor-pointer cursor-pointer"
+            file:cursor-pointer cursor-pointer
+            disabled:opacity-50 disabled:cursor-not-allowed"
         />
         <p className="text-gray-500 text-xs mt-2">
-          Max file size: 1GB. Larger files may take a few minutes to process.
+          Supported formats: mp4, mkv, avi, mov, webm. Max file size: 25MB (Whisper API limit).
         </p>
       </div>
+
+      {/* Upload Progress */}
+      {uploadProgress && (
+        <div className="mb-4 bg-blue-900/30 border border-blue-600 text-blue-400 px-4 py-3 rounded">
+          {uploadProgress}
+        </div>
+      )}
 
       {/* Error Message */}
       {error && (
