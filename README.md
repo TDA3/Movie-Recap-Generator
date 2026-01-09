@@ -5,7 +5,10 @@ A complete web application that allows users to generate Burmese movie recap scr
 ## Features
 
 - **YouTube Integration**: Fetch transcripts directly from YouTube videos
-- **Video Upload Support**: Upload video files (up to 1GB)
+- **Video Upload Support**: Upload video files and automatically transcribe using OpenAI Whisper
+  - Supports common video formats: mp4, mov, avi, mkv, webm
+  - Maximum file size: 25MB (Whisper API limit)
+  - Automatic speech-to-text transcription
 - **Transcript Preview**: View and edit transcripts before generating
 - **AI-Powered Translation**: Generate Burmese scripts using OpenAI GPT-4
 - **Catchy Hooks**: Generate engaging Burmese hook sentences for social media
@@ -43,6 +46,8 @@ cp .env.example .env.local
 OPENAI_API_KEY=your_openai_api_key_here
 ```
 
+**Note**: The same OpenAI API key is used for both GPT-4 script generation and Whisper API video transcription.
+
 ### Running the Application
 
 Development mode:
@@ -61,9 +66,9 @@ npm start
 ## Usage
 
 1. **Input Source**: 
-   - Paste a YouTube URL and click "Fetch" to extract the transcript
-   - Or upload a video file (note: video processing is currently limited)
-   - Or manually paste a transcript
+   - **YouTube URL**: Paste a YouTube URL and click "Fetch" to extract the transcript
+   - **Video Upload**: Upload a video file (mp4, mov, avi, mkv, webm - max 25MB) for automatic transcription using OpenAI Whisper
+   - **Manual Input**: Or manually paste a transcript directly into the preview area
 
 2. **Transcript Preview**: 
    - Review and edit the fetched/uploaded transcript
@@ -88,7 +93,7 @@ npm start
 
 - **Frontend**: Next.js 16, React 19, TypeScript
 - **Styling**: Tailwind CSS 4
-- **AI**: OpenAI GPT-4
+- **AI**: OpenAI GPT-4 (script generation), OpenAI Whisper (video transcription)
 - **YouTube**: youtube-transcript library
 - **Deployment**: Vercel-ready
 
@@ -99,7 +104,8 @@ npm start
 │   ├── api/
 │   │   ├── fetch-transcript/route.ts  # YouTube transcript fetching
 │   │   ├── generate-script/route.ts   # Burmese script generation
-│   │   └── generate-hooks/route.ts    # Catchy hooks generation
+│   │   ├── generate-hooks/route.ts    # Catchy hooks generation
+│   │   └── process-video/route.ts     # Video upload & transcription
 │   ├── globals.css                    # Global styles
 │   ├── layout.tsx                     # Root layout
 │   └── page.tsx                       # Main page
@@ -111,6 +117,7 @@ npm start
 │   └── RecapScript.tsx                # Script editor
 ├── lib/
 │   ├── openai.ts                      # OpenAI integration
+│   ├── whisper.ts                     # Whisper API integration
 │   ├── youtube.ts                     # YouTube utilities
 │   └── utils.ts                       # Common utilities
 └── package.json
@@ -118,8 +125,11 @@ npm start
 
 ## Environment Variables
 
-- `OPENAI_API_KEY` (Required): Your OpenAI API key for GPT-4 access
-- `YOUTUBE_API_KEY` (Optional): YouTube Data API key (currently not used)
+- `OPENAI_API_KEY` (Required): Your OpenAI API key for GPT-4 and Whisper API access
+  - Used for generating Burmese scripts and hooks
+  - Used for transcribing uploaded video files
+  - Get your key from: https://platform.openai.com/api-keys
+- `YOUTUBE_API_KEY` (Optional): YouTube Data API key (currently not used, youtube-transcript library works without it)
 
 ## License
 
