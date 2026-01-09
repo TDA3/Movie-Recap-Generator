@@ -4,7 +4,7 @@ import { transcribeAudio } from '@/lib/whisper';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-// Increase max size to handle large video files (1GB)
+// Whisper API has a 25MB file size limit
 export const maxDuration = 300; // 5 minutes timeout for processing
 
 export async function POST(request: NextRequest) {
@@ -33,19 +33,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate file size (max 1GB = 1073741824 bytes)
-    const maxSize = 1073741824;
-    if (file.size > maxSize) {
-      return NextResponse.json(
-        { error: 'File size exceeds 1GB limit' },
-        { status: 400 }
-      );
-    }
-
-    // OpenAI Whisper has a 25MB limit, but we'll try to process the file
-    // For files larger than 25MB, we might need to implement chunking or audio extraction
-    // For now, we'll let OpenAI handle it and provide appropriate error messages
-    if (file.size > 26214400) { // 25MB
+    // OpenAI Whisper has a 25MB limit
+    const whisperLimit = 26214400; // 25MB
+    if (file.size > whisperLimit) {
       return NextResponse.json(
         { 
           error: 'Video file is too large for direct transcription. OpenAI Whisper API has a 25MB limit. Please use a shorter video or compress the file.',

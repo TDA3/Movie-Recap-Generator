@@ -32,7 +32,7 @@ export async function transcribeAudio(audioFile: Buffer, filename: string): Prom
       response_format: "text",
     });
     
-    return transcription as unknown as string;
+    return transcription;
   } catch (error) {
     console.error('Error transcribing audio with Whisper:', error);
     if (error instanceof Error) {

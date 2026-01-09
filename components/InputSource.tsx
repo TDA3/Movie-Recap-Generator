@@ -51,15 +51,7 @@ export default function InputSource({ onTranscriptFetched }: InputSourceProps) {
     setError('');
     setUploadProgress('');
 
-    // Check file size (1GB = 1073741824 bytes)
-    const maxSize = 1073741824;
-    if (file.size > maxSize) {
-      setError('File size exceeds 1GB limit');
-      e.target.value = ''; // Reset file input
-      return;
-    }
-
-    // Check for 25MB Whisper API limit and warn user
+    // Check for 25MB Whisper API limit
     const whisperLimit = 26214400; // 25MB
     if (file.size > whisperLimit) {
       setError('Video file is too large for direct transcription. OpenAI Whisper API has a 25MB limit. Please use a shorter video or compress the file.');
